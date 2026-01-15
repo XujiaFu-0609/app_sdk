@@ -42,10 +42,17 @@ await send_message_json(msgJson);
 
 ### 2) 鸿蒙（ohos）原生
 
-以 C FFI 的动态库形式提供：
+以 C FFI 的动态库形式提供（使用 HarmonyOS NDK 交叉编译）：
 
 ```bash
-cargo build --release --features ohos
+# 安装目标（至少安装一种）
+rustup target add aarch64-unknown-linux-ohos
+
+# 设置 NDK 路径（示例，按你的安装路径调整）
+export OHOS_NDK_HOME=/path/to/openharmony/sdk
+
+# 编译生成鸿蒙动态库（仓库已配置 .cargo/config 与链接脚本）
+cargo build --release --features ohos --target aarch64-unknown-linux-ohos
 ```
 
 生成 C 头文件（可选）：
@@ -71,7 +78,9 @@ int rc = app_send_message_json(json);
 app_string_free(json);
 ```
 
-将生成的 `.so` 与头文件集成到鸿蒙工程即可调用。
+将生成的 `.so` 与头文件集成到鸿蒙工程即可调用。仓库已包含：
+- `.cargo/config.toml`：为 `aarch64-unknown-linux-ohos` 指定链接器脚本
+- `scripts/ohos-aarch64-clang.sh`：读取 `OHOS_NDK_HOME` 并配置 clang/sysroot
 
 ### 3) Android（UniFFI / Kotlin）
 

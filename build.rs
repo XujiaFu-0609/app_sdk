@@ -1,3 +1,6 @@
 fn main() {
-    // 使用宏导出，不需要UDL脚手架；保持空构建脚本以避免误触发。
+    #[cfg(target_env = "ohos")]
+    {
+        ohos_ndk_env::setup_ohos_ndk_env();
+    }
 }

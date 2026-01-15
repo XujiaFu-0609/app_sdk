@@ -21,6 +21,7 @@ uniffi = { version = "0.25", optional = true, features = ["cli"] }
 
 [build-dependencies]
 uniffi_build = "0.25"
+ohos_ndk_env = "0.1"
 
 [dev-dependencies]
 cbindgen = "0.24"
