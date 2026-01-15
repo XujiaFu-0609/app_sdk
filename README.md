@@ -84,8 +84,8 @@ cargo build --release --features uniffi
 生成 Kotlin 绑定代码（需要安装 `uniffi-bindgen`）：
 
 ```bash
-cargo install uniffi_bindgen
-uniffi-bindgen generate uniffi/app_sdk.udl --language kotlin --out-dir gen/kotlin
+cargo run --features "uniffi,uniffi/cli" --bin uniffi-bindgen -- \
+  generate uniffi/app_sdk.udl --language kotlin --out-dir gen/kotlin
 ```
 
 将生成的 Kotlin 源整合到 Android 工程（或打包为 AAR）。

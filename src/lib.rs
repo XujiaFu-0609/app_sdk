@@ -4,8 +4,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 
 static NEXT_ID: AtomicU64 = AtomicU64::new(1);
-#[cfg(feature = "uniffi")]
-pub struct UniFfiTag;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "uniffi", derive(uniffi::Record))]
@@ -68,6 +66,9 @@ pub mod wasm;
 
 #[cfg(feature = "ohos")]
 pub mod ffi;
+
+#[cfg(feature = "uniffi")]
+uniffi::setup_scaffolding!("app_sdk");
 
 #[cfg(feature = "uniffi")]
 mod uniffi_api {
