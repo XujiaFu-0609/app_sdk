@@ -1,9 +1,10 @@
 # app_sdk
 
-单份Rust代码，支持以下三种构建与使用方式：
+单份Rust代码，支持以下几种构建与使用方式：
 
 - Web 前端：WASM（wasm-bindgen），前端直接 `import` 使用
-- 鸿蒙（OpenHarmony/ohos）：C FFI 动态库与头文件，原生直接导入
+- 原生 C FFI：动态库与头文件，可被 C/C++ 等直接导入
+- 鸿蒙（OpenHarmony/ohos）：基于 napi-ohos 的 N-API 模块（ArkTS）
 - Android：UniFFI 生成 Kotlin 绑定，原生直接导入
 
 ## 核心能力
@@ -40,19 +41,12 @@ const msgJson = create_message('alice', 'hello wasm');
 await send_message_json(msgJson);
 ```
 
-### 2) 鸿蒙（ohos）原生
+### 2) 原生 C FFI（通用）
 
-以 C FFI 的动态库形式提供（使用 HarmonyOS NDK 交叉编译）：
+以 C FFI 的动态库形式提供，可被 C/C++ 等直接调用：
 
 ```bash
-# 安装目标（至少安装一种）
-rustup target add aarch64-unknown-linux-ohos
-
-# 设置 NDK 路径（示例，按你的安装路径调整）
-export OHOS_NDK_HOME=/path/to/openharmony/sdk
-
-# 编译生成鸿蒙动态库（仓库已配置 .cargo/config 与链接脚本）
-cargo build --release --features ohos --target aarch64-unknown-linux-ohos
+cargo build --release
 ```
 
 生成 C 头文件（可选）：
@@ -73,16 +67,33 @@ cbindgen --crate app_sdk --output target/app_sdk.h
 ```c
 #include "app_sdk.h"
 
-char* json = app_create_message("alice", "hello ohos");
+char* json = app_create_message("alice", "hello native");
 int rc = app_send_message_json(json);
 app_string_free(json);
 ```
 
-将生成的 `.so` 与头文件集成到鸿蒙工程即可调用。仓库已包含：
-- `.cargo/config.toml`：为 `aarch64-unknown-linux-ohos` 指定链接器脚本
-- `scripts/ohos-aarch64-clang.sh`：读取 `OHOS_NDK_HOME` 并配置 clang/sysroot
+### 3) 鸿蒙（ohos）N-API（napi-ohos / ArkTS）
 
-### 3) Android（UniFFI / Kotlin）
+鸿蒙侧推荐使用 napi-ohos 提供的 N-API 模块，在 ArkTS 中直接调用。
+本仓库已内置相关依赖与构建脚本：
+
+- Cargo.toml 中的特性：
+  - `ohos_napi = ["dep:napi-ohos", "dep:napi-derive-ohos"]`
+- build.rs 中在启用 `ohos_napi` 特性时调用：
+  - `napi_build_ohos::setup();`
+
+在上层鸿蒙/ohos-rs 工程中：
+
+1. 将本 crate 作为依赖引入，并启用 `ohos_napi` 特性；
+2. 使用 `ohrs build` 或 DevEco 集成的 Rust 构建流程构建 N-API 模块；
+3. 生成的 `.so` 与类型定义可在 ArkTS 侧直接 `import` 并调用。
+
+N-API 导出函数（见 `src/ohos_napi.rs`）：
+
+- `createMessage(sender: string, content: string): string`：返回 `Message` 的 JSON 字符串
+- `sendMessageJson(json: string): void`：解析 JSON 并调用底层 `send_message`
+
+### 4) Android（UniFFI / Kotlin）
 
 启用 `uniffi` 特性生成脚手架：
 
@@ -115,14 +126,15 @@ App_sdk.sendMessage(msg)
 
 - 业务逻辑仅实现一份：`src/lib.rs` 中的 `Message` 与 `send_message`。
 - 平台层只做“封装/适配”：
-  - WASM：`src/wasm.rs` 使用 `wasm-bindgen` 导出 JSON 接口；
-  - OHOS：`src/ffi.rs` 提供 `extern "C"` 接口与字符串释放；
-  - UniFFI：通过 UDL 与 `build.rs` 生成跨语言脚手架，直接暴露结构体与函数。
+-  - WASM：`src/wasm.rs` 使用 `wasm-bindgen` 导出 JSON 接口；
+-  - 原生 C：`src/ffi.rs` 提供 `extern "C"` 接口与字符串释放；
+-  - 鸿蒙：`src/ohos_napi.rs` 使用 `napi-ohos` 导出 N-API 接口；
+-  - UniFFI：通过 UDL 与 `build.rs` 生成跨语言脚手架，直接暴露结构体与函数。
 - 这样可以保证“代码只写一份，然后编译不同包”，避免重复实现。
 
 ## 注意事项
 
 - 真实场景中 `send_message` 可接入网络/IPC/队列等，当前为 Demo 行为（打印）。
 - WASM 产物如何打包（`--target bundler` / `--target web`）可按前端环境调整。
-- OHOS 需针对具体架构编译（如 `aarch64`），并在工程配置中加载 `.so` 与头文件。
-- Android 产物通常打包为 AAR，更易于依赖管理；也可直接集成生成的 Kotlin 源。# app_sdk
+- 鸿蒙推荐通过 napi-ohos / N-API 的方式集成，在 ArkTS 中直接使用。
+- Android 产物通常打包为 AAR，更易于依赖管理；也可直接集成生成的 Kotlin 源。

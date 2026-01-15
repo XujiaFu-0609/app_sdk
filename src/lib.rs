@@ -64,7 +64,6 @@ pub fn send_message_json(json: &str) -> Result<(), AppError> {
 #[cfg(feature = "wasm")]
 pub mod wasm;
 
-#[cfg(feature = "ohos")]
 pub mod ffi;
 
 #[cfg(feature = "uniffi")]

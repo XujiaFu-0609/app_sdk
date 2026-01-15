@@ -1,6 +1,6 @@
 fn main() {
-    #[cfg(target_env = "ohos")]
+    #[cfg(feature = "ohos_napi")]
     {
-        ohos_ndk_env::setup_ohos_ndk_env();
+        napi_build_ohos::setup();
     }
 }
