@@ -1,0 +1,6 @@
+language = "C"
+pragma_once = true
+include_guard = "APP_SDK_H"
+
+[export]
+item_types = ["functions"]

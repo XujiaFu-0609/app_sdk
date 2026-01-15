@@ -1,0 +1,13 @@
+namespace app_sdk;
+
+dictionary Message {
+    id: u64;
+    sender: string;
+    content: string;
+    timestamp: u64;
+};
+
+interface AppSdk {
+    fn create_message(sender: string, content: string) -> Message;
+    fn send_message(msg: Message);
+}
