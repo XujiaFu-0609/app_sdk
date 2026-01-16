@@ -12,8 +12,10 @@ default = []
 wasm = ["dep:wasm-bindgen"]
 uniffi = ["dep:uniffi"]
 ohos_napi = ["dep:napi-ohos", "dep:napi-derive-ohos"]
+headers = ["safer-ffi/headers"]
 
 [dependencies]
+safer-ffi = "0.1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 wasm-bindgen = { version = "0.2", optional = true }
